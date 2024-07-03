@@ -132,9 +132,19 @@ func cslTestFailure(resp http.ResponseWriter, request *http.Request) {
 	resp.Write(b)
 }
 
-// Dashboard:
-// Returns workflows belonging to current organization and number of those
-// workflows that haven't been executed before
+/*
+Dashboard:
+Returns workflows belonging to current organization and number of those
+workflows that haven't been executed before
+
+	{
+	    "success": true,
+	    "data": {
+	        "workflows": 2,
+	        "unexecuted_workflows": 0
+	    }
+	}
+*/
 func cslWorkflows(resp http.ResponseWriter, request *http.Request) {
 	if shuffle.HandleCors(resp, request) {
 		return
@@ -203,9 +213,18 @@ func cslWorkflows(resp http.ResponseWriter, request *http.Request) {
 	resp.Write(b)
 }
 
-// Dashboard:
-// Returns apps that the current organization has access to and the
-// number of apps that haven't been executed before
+/*
+Dashboard:
+Returns apps that the current organization has access to and the
+number of apps that haven't been executed before
+
+	{
+	    "success": true,
+	    "data": {
+	        "apps": 62
+	    }
+	}
+*/
 func cslApps(resp http.ResponseWriter, request *http.Request) {
 	if shuffle.HandleCors(resp, request) {
 		return
@@ -236,6 +255,8 @@ func cslApps(resp http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// TODO: get the count of apps that haven't been executed before and update comment for function
+
 	res := CslResponse{
 		Success: true,
 		Data: CslAppsResponse{
@@ -255,8 +276,18 @@ func cslApps(resp http.ResponseWriter, request *http.Request) {
 	resp.Write(b)
 }
 
-// Dashboard:
-// Returns total and daily API usage for the current organization
+/*
+Dashboard:
+Returns total and daily API usage for the current organization
+
+	{
+	    "success": true,
+	    "data": {
+	        "total_api_usage": 680,
+	        "daily_api_usage": 670
+	    }
+	}
+*/
 func cslApiUsage(resp http.ResponseWriter, request *http.Request) {
 	if shuffle.HandleCors(resp, request) {
 		return
@@ -307,6 +338,24 @@ func cslApiUsage(resp http.ResponseWriter, request *http.Request) {
 	resp.Write(b)
 }
 
+/*
+Dashboard:
+Returns monthly workflow (total, successful, failed) executions and
+a list of the daily workflow execution count for the last 30 days ordered from most recent to oldest
+
+	{
+	    "success": true,
+	    "data": {
+	        "workflow_executions": 20,
+	        "workflow_executions_finished": 10,
+	        "workflow_executions_failed": 10,
+	        "daily_workflow_executions": [
+	            20,
+	            ...
+	        ]
+	    }
+	}
+*/
 func cslWorkflowExecutions(resp http.ResponseWriter, request *http.Request) {
 	if shuffle.HandleCors(resp, request) {
 		return
