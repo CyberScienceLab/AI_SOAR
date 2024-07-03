@@ -5123,6 +5123,16 @@ func initHandlers() {
 	r.HandleFunc("/api/v1/dashboards/{key}/widgets", shuffle.HandleNewWidget).Methods("POST", "OPTIONS")
 	r.HandleFunc("/api/v1/dashboards/{key}/widgets/{widget_id}", shuffle.HandleGetWidget).Methods("GET", "OPTIONS")
 
+	// CSL Endpoints
+
+	// Dashboard
+	r.HandleFunc("/api/v1/csl/testSuccess", cslTestSuccess).Methods("GET")
+	r.HandleFunc("/api/v1/csl/testFailure", cslTestFailure).Methods("GET")
+	r.HandleFunc("/api/v1/csl/workflows", cslWorkflows).Methods("GET")
+	r.HandleFunc("/api/v1/csl/apps", cslApps).Methods("GET")
+	r.HandleFunc("/api/v1/csl/apiUsage", cslApiUsage).Methods("GET")
+	r.HandleFunc("/api/v1/csl/workflowExecutions", cslWorkflowExecutions).Methods("GET")
+
 	r.Use(shuffle.RequestMiddleware)
 	http.Handle("/", r)
 }
