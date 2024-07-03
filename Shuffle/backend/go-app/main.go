@@ -5132,6 +5132,8 @@ func initHandlers() {
 	r.HandleFunc("/api/v1/csl/apps", cslApps).Methods("GET")
 	r.HandleFunc("/api/v1/csl/apiUsage", cslApiUsage).Methods("GET")
 	r.HandleFunc("/api/v1/csl/workflowExecutions", cslWorkflowExecutions).Methods("GET")
+	r.HandleFunc("/api/v1/csl/workflowChart", cslWorkflowChart).Methods("GET")
+	r.HandleFunc("/api/v1/csl/appChart", cslAppChart).Methods("GET")
 
 	r.Use(shuffle.RequestMiddleware)
 	http.Handle("/", r)

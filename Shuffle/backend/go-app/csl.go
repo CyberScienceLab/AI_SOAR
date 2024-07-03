@@ -12,6 +12,7 @@ import (
 
 const MaxAppCount = 1000
 const MonthLength = 30
+const WeekLength = 7
 
 type CslResponse struct {
 	Success bool        `json:"success"`
@@ -40,6 +41,18 @@ type CslWorkflowExecutionsResponse struct {
 	DailyWorkflowExecutions    []int64 `json:"daily_workflow_executions"`
 }
 
+type CslChartResponse struct {
+	Day   CslExecutionStats `json:"day"`
+	Week  CslExecutionStats `json:"week"`
+	Month CslExecutionStats `json:"month"`
+}
+
+type CslExecutionStats struct {
+	Total   int64 `json:"total"`
+	Success int64 `json:"success"`
+	Failure int64 `json:"failure"`
+}
+
 // Take error and generate response in Csl expected format
 func createCslErrorResponse(err error) []byte {
 	res := CslResponse{
@@ -56,9 +69,10 @@ func createCslErrorResponse(err error) []byte {
 }
 
 // Verifies whether user has access to organization
-// 1) Does user exist in organization
+//  1. Does user exist in organization
+//
 // or
-// 2) Does user have support access
+//  2. Does user have support access
 func checkUserOrgAccess(ctx context.Context, user shuffle.User) error {
 
 	org, err := shuffle.GetOrg(ctx, user.ActiveOrg.Id)
@@ -79,7 +93,62 @@ func checkUserOrgAccess(ctx context.Context, user shuffle.User) error {
 	}
 
 	log.Printf("[WARNING] User %s isn't a part of org %s", user.Id, org.Id)
-	return errors.New("User attempting to access an organization they're not a part of")
+	return errors.New("user attempting to access an organization they're not a part of")
+}
+
+// Handle a request that requires OrgStats, created to reduce code duplication.
+// Function returns nil if error occurs and handles error response
+//  1. Handle Cors
+//  2. Handle Api Authentication
+//  3. Retrieves context
+//  4. Checks users access to org
+//  5. Retrieves and returns org statistics
+func handleOrgStatsRequest(resp http.ResponseWriter, request *http.Request) *shuffle.ExecutionInfo {
+	if shuffle.HandleCors(resp, request) {
+		return nil
+	}
+
+	user, err := shuffle.HandleApiAuthentication(resp, request)
+	if err != nil {
+		log.Printf("[ERROR] Api authentication failed in cslWorkflows: %s", err)
+		resp.WriteHeader(401)
+		resp.Write(createCslErrorResponse(err))
+		return nil
+	}
+
+	ctx := shuffle.GetContext(request)
+
+	err = checkUserOrgAccess(ctx, user)
+	if err != nil {
+		resp.WriteHeader(401)
+		resp.Write(createCslErrorResponse(err))
+		return nil
+	}
+
+	orgStats, err := shuffle.GetOrgStatistics(ctx, user.ActiveOrg.Id)
+	if err != nil {
+		log.Printf("[ERROR] Failed getting stats for org %s: %s", user.ActiveOrg.Id, err)
+		resp.WriteHeader(500)
+		resp.Write(createCslErrorResponse(err))
+		return nil
+	}
+
+	return orgStats
+}
+
+// Write response status code and JSON response body.
+// If error occurs during marshaling handle it and write error response
+func marshalAndWriteResponse(response http.ResponseWriter, res interface{}, callingFunctionName string) {
+	b, err := json.Marshal(res)
+	if err != nil {
+		log.Printf("[ERROR] Failed marshaling in %s", callingFunctionName)
+		response.WriteHeader(500)
+		response.Write(createCslErrorResponse(err))
+		return
+	}
+
+	response.WriteHeader(200)
+	response.Write(b)
 }
 
 // ===========================
@@ -201,16 +270,7 @@ func cslWorkflows(resp http.ResponseWriter, request *http.Request) {
 		},
 	}
 
-	b, err := json.Marshal(res)
-	if err != nil {
-		log.Printf("[ERROR] Failed marshaling in cslWorkflows")
-		resp.WriteHeader(500)
-		resp.Write(createCslErrorResponse(err))
-		return
-	}
-
-	resp.WriteHeader(200)
-	resp.Write(b)
+	marshalAndWriteResponse(resp, res, "cslWorkflows")
 }
 
 /*
@@ -264,16 +324,7 @@ func cslApps(resp http.ResponseWriter, request *http.Request) {
 		},
 	}
 
-	b, err := json.Marshal(res)
-	if err != nil {
-		log.Printf("[ERROR] Failed marshaling in cslApps")
-		resp.WriteHeader(500)
-		resp.Write(createCslErrorResponse(err))
-		return
-	}
-
-	resp.WriteHeader(200)
-	resp.Write(b)
+	marshalAndWriteResponse(resp, res, "cslApps")
 }
 
 /*
@@ -289,32 +340,8 @@ Returns total and daily API usage for the current organization
 	}
 */
 func cslApiUsage(resp http.ResponseWriter, request *http.Request) {
-	if shuffle.HandleCors(resp, request) {
-		return
-	}
-
-	user, err := shuffle.HandleApiAuthentication(resp, request)
-	if err != nil {
-		log.Printf("[ERROR] Api authentication failed in cslWorkflows: %s", err)
-		resp.WriteHeader(401)
-		resp.Write(createCslErrorResponse(err))
-		return
-	}
-
-	ctx := shuffle.GetContext(request)
-
-	err = checkUserOrgAccess(ctx, user)
-	if err != nil {
-		resp.WriteHeader(401)
-		resp.Write(createCslErrorResponse(err))
-		return
-	}
-
-	orgStats, err := shuffle.GetOrgStatistics(ctx, user.ActiveOrg.Id)
-	if err != nil {
-		log.Printf("[ERROR] Failed getting stats for org %s: %s", user.ActiveOrg.Id, err)
-		resp.WriteHeader(500)
-		resp.Write(createCslErrorResponse(err))
+	orgStats := handleOrgStatsRequest(resp, request)
+	if orgStats == nil {
 		return
 	}
 
@@ -326,16 +353,7 @@ func cslApiUsage(resp http.ResponseWriter, request *http.Request) {
 		},
 	}
 
-	b, err := json.Marshal(res)
-	if err != nil {
-		log.Printf("[ERROR] Failed marshaling in cslApiUsage")
-		resp.WriteHeader(500)
-		resp.Write(createCslErrorResponse(err))
-		return
-	}
-
-	resp.WriteHeader(200)
-	resp.Write(b)
+	marshalAndWriteResponse(resp, res, "cslApiUsage")
 }
 
 /*
@@ -357,32 +375,8 @@ a list of the daily workflow execution count for the last 30 days ordered from m
 	}
 */
 func cslWorkflowExecutions(resp http.ResponseWriter, request *http.Request) {
-	if shuffle.HandleCors(resp, request) {
-		return
-	}
-
-	user, err := shuffle.HandleApiAuthentication(resp, request)
-	if err != nil {
-		log.Printf("[ERROR] Api authentication failed in cslWorkflows: %s", err)
-		resp.WriteHeader(401)
-		resp.Write(createCslErrorResponse(err))
-		return
-	}
-
-	ctx := shuffle.GetContext(request)
-
-	err = checkUserOrgAccess(ctx, user)
-	if err != nil {
-		resp.WriteHeader(401)
-		resp.Write(createCslErrorResponse(err))
-		return
-	}
-
-	orgStats, err := shuffle.GetOrgStatistics(ctx, user.ActiveOrg.Id)
-	if err != nil {
-		log.Printf("[ERROR] Failed getting stats for org %s: %s", user.ActiveOrg.Id, err)
-		resp.WriteHeader(500)
-		resp.Write(createCslErrorResponse(err))
+	orgStats := handleOrgStatsRequest(resp, request)
+	if orgStats == nil {
 		return
 	}
 
@@ -407,14 +401,133 @@ func cslWorkflowExecutions(resp http.ResponseWriter, request *http.Request) {
 		},
 	}
 
-	b, err := json.Marshal(res)
-	if err != nil {
-		log.Printf("[ERROR] Failed marshaling in cslWorkflowExecutions")
-		resp.WriteHeader(500)
-		resp.Write(createCslErrorResponse(err))
+	marshalAndWriteResponse(resp, res, "cslWorkflowExecutions")
+}
+
+/*
+Dashboard:
+Returns day, week and month statistics for workflow total, succesful and failed executions
+
+	{
+		"success": true,
+		"data": {
+			"day": {
+				"total": 20,
+				"success": 10,
+				"failure": 10
+			},
+			"week": {
+			...
+			},
+			"month": {
+			...
+			}
+		}
+	}
+*/
+func cslWorkflowChart(resp http.ResponseWriter, request *http.Request) {
+	orgStats := handleOrgStatsRequest(resp, request)
+	if orgStats == nil {
 		return
 	}
 
-	resp.WriteHeader(200)
-	resp.Write(b)
+	// calculate the weeks execution stats
+	var weekSuccess int64 = orgStats.DailyWorkflowExecutionsFinished
+	var weekFailure int64 = orgStats.DailyWorkflowExecutions - orgStats.DailyWorkflowExecutionsFinished
+
+	i := 0
+	for i < WeekLength-1 && i < len(orgStats.DailyStatistics) {
+		dayStats := orgStats.DailyStatistics[len(orgStats.DailyStatistics)-i-1]
+		weekSuccess += dayStats.WorkflowExecutionsFinished
+		weekFailure += dayStats.WorkflowExecutions - dayStats.WorkflowExecutionsFinished
+
+		i++
+	}
+
+	res := CslResponse{
+		Success: true,
+		Data: CslChartResponse{
+			Day: CslExecutionStats{
+				Total:   orgStats.DailyWorkflowExecutions,
+				Success: orgStats.DailyWorkflowExecutionsFinished,
+				Failure: orgStats.DailyWorkflowExecutions - orgStats.DailyWorkflowExecutionsFinished,
+			},
+			Week: CslExecutionStats{
+				Total:   weekSuccess + weekFailure,
+				Success: weekSuccess,
+				Failure: weekFailure,
+			},
+			Month: CslExecutionStats{
+				Total:   orgStats.MonthlyWorkflowExecutions,
+				Success: orgStats.MonthlyWorkflowExecutionsFinished,
+				Failure: orgStats.MonthlyWorkflowExecutions - orgStats.MonthlyWorkflowExecutionsFinished,
+			},
+		},
+	}
+
+	marshalAndWriteResponse(resp, res, "cslWorkflowChart")
+}
+
+/*
+Dashboard:
+Returns day, week and month statistics for app total, succesful and failed executions
+
+	{
+		"success": true,
+		"data": {
+			"day": {
+				"total": 30,
+				"success": 30,
+				"failure": 0
+			},
+			"week": {
+			...
+			},
+			"month": {
+			...
+			}
+		}
+	}
+*/
+func cslAppChart(resp http.ResponseWriter, request *http.Request) {
+	orgStats := handleOrgStatsRequest(resp, request)
+	if orgStats == nil {
+		return
+	}
+
+	// calculate the weeks execution stats
+	var weekSuccess int64 = orgStats.DailyAppExecutions - orgStats.DailyAppExecutionsFailed
+	var weekFailure int64 = orgStats.DailyAppExecutionsFailed
+
+	i := 0
+	for i < WeekLength-1 && i < len(orgStats.DailyStatistics) {
+		dayStats := orgStats.DailyStatistics[len(orgStats.DailyStatistics)-i-1]
+		weekSuccess += dayStats.AppExecutions - dayStats.AppExecutionsFailed
+		weekFailure += dayStats.AppExecutionsFailed
+
+		i++
+	}
+
+	res := CslResponse{
+		Success: true,
+		Data: CslChartResponse{
+			Day: CslExecutionStats{
+				Total:   orgStats.DailyAppExecutions,
+				Success: orgStats.DailyAppExecutions - orgStats.DailyAppExecutionsFailed,
+				Failure: orgStats.DailyAppExecutionsFailed,
+			},
+			Week: CslExecutionStats{
+				Total:   weekSuccess + weekFailure,
+				Success: weekSuccess,
+				Failure: weekFailure,
+			},
+			Month: CslExecutionStats{
+				Total:   orgStats.MonthlyAppExecutions,
+				Success: orgStats.MonthlyAppExecutions - orgStats.MonthlyAppExecutionsFailed,
+				Failure: orgStats.MonthlyAppExecutionsFailed,
+			},
+		},
+	}
+
+	marshalAndWriteResponse(resp, res, "cslAppChart")
 }
