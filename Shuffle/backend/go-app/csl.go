@@ -26,7 +26,8 @@ type CslWorkflowsResponse struct {
 }
 
 type CslAppsResponse struct {
-	Apps int `json:"apps"`
+	Apps           int `json:"apps"`
+	UnexecutedApps int `json:"unexecuted_apps"`
 }
 
 type CslApiUsageResponse struct {
@@ -278,12 +279,16 @@ Dashboard:
 Returns apps that the current organization has access to and the
 number of apps that haven't been executed before
 
-	{
-	    "success": true,
-	    "data": {
-	        "apps": 62
-	    }
-	}
+	  INCOMPLETE: unexecuted_apps functionality not completed
+	  currently value will always be returned as -1
+
+		{
+		    "success": true,
+		    "data": {
+		        "apps": 62,
+		        "unexecuted_apps": 60
+		    }
+		}
 */
 func cslApps(resp http.ResponseWriter, request *http.Request) {
 	if shuffle.HandleCors(resp, request) {
@@ -315,12 +320,15 @@ func cslApps(resp http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	// TODO: get the count of apps that haven't been executed before and update comment for function
+	// TODO: add logic to get UnexecutedApps count
+	//  information in the doc about potential solutions to get the information because
+	//  by default Shuffler has no tracking of which apps have and haven't been executed
 
 	res := CslResponse{
 		Success: true,
 		Data: CslAppsResponse{
-			Apps: len(workflowapps),
+			Apps:           len(workflowapps),
+			UnexecutedApps: -1,
 		},
 	}
 
