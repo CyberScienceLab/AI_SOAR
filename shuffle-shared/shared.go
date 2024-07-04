@@ -64,6 +64,10 @@ func RequestMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
+		if r.URL.Path != "/api/v1/streams/results" && r.URL.Path != "/api/v1/workflows/queue" {
+			log.Printf("[DEBUG] %s: %s", r.Method, r.URL.Path)
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }
@@ -18974,44 +18978,44 @@ func HandleSSO(resp http.ResponseWriter, request *http.Request) {
 
 				expiration := time.Now().Add(3600 * time.Second)
 				// if len(user.Session) == 0 {
-					log.Printf("[INFO] User does NOT have session - creating")
-					sessionToken := uuid.NewV4().String()
-					newCookie := &http.Cookie{
-						Name:    "session_token",
-						Value:   sessionToken,
-						Expires: expiration,
-						Path:    "/",
-					}
+				log.Printf("[INFO] User does NOT have session - creating")
+				sessionToken := uuid.NewV4().String()
+				newCookie := &http.Cookie{
+					Name:    "session_token",
+					Value:   sessionToken,
+					Expires: expiration,
+					Path:    "/",
+				}
 
-					if project.Environment == "cloud" {
-						newCookie.Domain = ".shuffler.io"
-						newCookie.Secure = true
-						newCookie.HttpOnly = true
-					}
+				if project.Environment == "cloud" {
+					newCookie.Domain = ".shuffler.io"
+					newCookie.Secure = true
+					newCookie.HttpOnly = true
+				}
 
-					http.SetCookie(resp, newCookie)
+				http.SetCookie(resp, newCookie)
 
-					newCookie.Name = "__session"
-					http.SetCookie(resp, newCookie)
+				newCookie.Name = "__session"
+				http.SetCookie(resp, newCookie)
 
-					err = SetSession(ctx, user, sessionToken)
-					if err != nil {
-						log.Printf("[WARNING] Error creating session for user: %s", err)
-						resp.WriteHeader(401)
-						resp.Write([]byte(fmt.Sprintf(`{"success": false, "reason": "Failed setting session"}`)))
-						return
-					}
+				err = SetSession(ctx, user, sessionToken)
+				if err != nil {
+					log.Printf("[WARNING] Error creating session for user: %s", err)
+					resp.WriteHeader(401)
+					resp.Write([]byte(fmt.Sprintf(`{"success": false, "reason": "Failed setting session"}`)))
+					return
+				}
 
-					user.LoginInfo = append(user.LoginInfo, LoginInfo{
-						IP:        GetRequestIp(request),
-						Timestamp: time.Now().Unix(),
-					})
+				user.LoginInfo = append(user.LoginInfo, LoginInfo{
+					IP:        GetRequestIp(request),
+					Timestamp: time.Now().Unix(),
+				})
 
-					user.Session = sessionToken
-					user.LoginInfo = append(user.LoginInfo, LoginInfo{
-						IP:        GetRequestIp(request),
-						Timestamp: time.Now().Unix(),
-					})
+				user.Session = sessionToken
+				user.LoginInfo = append(user.LoginInfo, LoginInfo{
+					IP:        GetRequestIp(request),
+					Timestamp: time.Now().Unix(),
+				})
 				// }
 				err = SetUser(ctx, &user, false)
 				if err != nil {
@@ -19048,39 +19052,39 @@ func HandleSSO(resp http.ResponseWriter, request *http.Request) {
 
 				expiration := time.Now().Add(3600 * time.Second)
 				// if len(user.Session) == 0 {
-					log.Printf("[INFO] User does NOT have session - creating")
-					sessionToken := uuid.NewV4().String()
-					newCookie := &http.Cookie{
-						Name:    "session_token",
-						Value:   sessionToken,
-						Expires: expiration,
-						Path:    "/",
-					}
+				log.Printf("[INFO] User does NOT have session - creating")
+				sessionToken := uuid.NewV4().String()
+				newCookie := &http.Cookie{
+					Name:    "session_token",
+					Value:   sessionToken,
+					Expires: expiration,
+					Path:    "/",
+				}
 
-					if project.Environment == "cloud" {
-						newCookie.Domain = ".shuffler.io"
-						newCookie.Secure = true
-						newCookie.HttpOnly = true
-					}
+				if project.Environment == "cloud" {
+					newCookie.Domain = ".shuffler.io"
+					newCookie.Secure = true
+					newCookie.HttpOnly = true
+				}
 
-					http.SetCookie(resp, newCookie)
+				http.SetCookie(resp, newCookie)
 
-					newCookie.Name = "__session"
-					http.SetCookie(resp, newCookie)
+				newCookie.Name = "__session"
+				http.SetCookie(resp, newCookie)
 
-					err = SetSession(ctx, user, sessionToken)
-					if err != nil {
-						log.Printf("[WARNING] Error creating session for user: %s", err)
-						resp.WriteHeader(401)
-						resp.Write([]byte(fmt.Sprintf(`{"success": false, "reason": "Failed setting session"}`)))
-						return
-					}
+				err = SetSession(ctx, user, sessionToken)
+				if err != nil {
+					log.Printf("[WARNING] Error creating session for user: %s", err)
+					resp.WriteHeader(401)
+					resp.Write([]byte(fmt.Sprintf(`{"success": false, "reason": "Failed setting session"}`)))
+					return
+				}
 
-					user.Session = sessionToken
-					user.LoginInfo = append(user.LoginInfo, LoginInfo{
-						IP:        GetRequestIp(request),
-						Timestamp: time.Now().Unix(),
-					})
+				user.Session = sessionToken
+				user.LoginInfo = append(user.LoginInfo, LoginInfo{
+					IP:        GetRequestIp(request),
+					Timestamp: time.Now().Unix(),
+				})
 				// }
 				err = SetUser(ctx, &user, false)
 				if err != nil {
@@ -24523,7 +24527,7 @@ func RunCategoryAction(resp http.ResponseWriter, request *http.Request) {
 	}
 
 	// Finds WHERE in the destination to put the input data
-	// Loops through input fields, then takes the data from them 
+	// Loops through input fields, then takes the data from them
 	if len(fieldFileContentMap) > 0 {
 		log.Printf("\n\n[DEBUG] Found file content map (Reverse Schemaless): %#v\n\n", fieldFileContentMap)
 
@@ -24906,7 +24910,6 @@ func RunCategoryAction(resp http.ResponseWriter, request *http.Request) {
 					}
 				}
 			}
-
 
 			marshalledHttpOutput, marshalErr := json.Marshal(httpOutput)
 
