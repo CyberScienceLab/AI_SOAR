@@ -2,7 +2,13 @@ module shuffle
 
 go 1.22.0
 
+
+// To develop locally with go run main.go...
 replace github.com/shuffle/shuffle-shared => ../../../shuffle-shared
+
+// To build image for custom backend
+// replace github.com/shuffle/shuffle-shared => ./shuffle-shared
+
 
 toolchain go1.22.2
 
