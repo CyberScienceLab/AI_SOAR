@@ -15,7 +15,7 @@ services:
     depends_on:
       - backend
   backend:
-    image: ghcr.io/shuffle/shuffle-backend:latest
+    image: csl-backend:latest
     container_name: shuffle-backend
     hostname: ${BACKEND_HOSTNAME}
     # Here for debugging:

@@ -7,8 +7,10 @@ WORKDIR /app
 ADD ./go-app/main.go /app
 ADD ./go-app/walkoff.go /app
 ADD ./go-app/docker.go /app
+ADD ./go-app/csl.go /app
 
 ADD ./go-app/go.mod /app
+ADD ./shuffle-shared /app/shuffle-shared
 
 # Required files for code generation
 ADD ./app_sdk/app_base.py /app_sdk
