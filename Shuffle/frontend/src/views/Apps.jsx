@@ -1407,7 +1407,7 @@ const Apps = (props) => {
           <div style={{ paddingTop: 20, paddingBottom: 20 }}>
             {selectedApp.link.length > 0 ? (
               <p>
-                <b>URL:</b> {selectedApp.link}
+                <b>URL:</b> {selectedApp.llm_url || selectedApp.link}
               </p>
             ) : null}
             <div style={{ marginTop: 15, marginBottom: 15 }}>
