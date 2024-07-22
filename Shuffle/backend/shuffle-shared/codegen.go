@@ -82,7 +82,7 @@ func GetCorrectActionName(parsed string) string {
 
 	if strings.HasPrefix(parsed, "\"") {
 		parsed = parsed[1:]
-	} 
+	}
 
 	if strings.HasSuffix(parsed, "\"") {
 		parsed = parsed[:len(parsed)-1]
@@ -511,10 +511,8 @@ func MakePythoncode(swagger *openapi3.Swagger, name, url, method string, paramet
 
 			// Add: client_id and client_secret in body as JSON?
 
-
 			// ADD: accessToken = field
 			authenticationSetup = fmt.Sprintf("authret = requests.get(f\"{url}%s\", headers=request_headers, auth=(username_basic, password_basic), verify=False)\n        if 'access_token' in authret.text:\n            request_headers[\"Authorization\"] = f\"Bearer {authret.json()['access_token']}\"\n        elif 'jwt' in authret.text:\n            request_headers[\"Authorization\"] = f\"Bearer {authret.json()['jwt']}\"\n        elif 'accessToken' in authret.text:\n            request_headers[\"Authorization\"] = f\"Bearer {authret.json()['accessToken']}\"\n        else:\n            request_headers[\"Authorization\"] = f\"Bearer {authret.text}\"\n        print(f\"Found Bearer auth: {authret.text}\")", api.Authentication.TokenUri)
-			
 
 			//log.Printf("[DEBUG] Appending jwt code for authenticationSetup:\n        %s", authenticationSetup)
 		}
@@ -835,12 +833,11 @@ func MakePythoncode(swagger *openapi3.Swagger, name, url, method string, paramet
 	//if strings.Contains(strings.ToLower(functionname), "upload_a_file") {
 	//	log.Printf("\n%s", data)
 	//}
-	
 
 	return functionname, data
 }
 
-func GetCustomActionCode(swagger *openapi3.Swagger, api WorkflowApp) string{	
+func GetCustomActionCode(swagger *openapi3.Swagger, api WorkflowApp) string {
 
 	authenticationParameter := ""
 	authenticationSetup := ""
@@ -860,7 +857,7 @@ func GetCustomActionCode(swagger *openapi3.Swagger, api WorkflowApp) string{
 			authenticationParameter = ", apikey"
 
 			if swagger.Components.SecuritySchemes["ApiKeyAuth"].Value.In == "header" {
-			
+
 				authenticationSetup = fmt.Sprintf(`if apikey != " ": parsed_headers["%s"] = apikey`, swagger.Components.SecuritySchemes["ApiKeyAuth"].Value.Name)
 
 				if len(swagger.Components.SecuritySchemes["ApiKeyAuth"].Value.Description) > 0 {
@@ -870,12 +867,12 @@ func GetCustomActionCode(swagger *openapi3.Swagger, api WorkflowApp) string{
 				}
 
 			} else if swagger.Components.SecuritySchemes["ApiKeyAuth"].Value.In == "query" {
-		
+
 				authenticationSetup = fmt.Sprintf("if apikey != \" \": parsed_queries[\"%s\"] = requests.utils.quote(apikey)", swagger.Components.SecuritySchemes["ApiKeyAuth"].Value.Name)
 			}
 
 		} else if swagger.Components.SecuritySchemes["Oauth2"] != nil {
-	
+
 			authenticationParameter = ", access_token"
 			authenticationSetup = fmt.Sprintf("if access_token != \" \": parsed_headers[\"Authorization\"] = f\"Bearer {access_token}\"\n        #parsed_headers[\"Content-Type\"] = \"application/json\"")
 
@@ -883,7 +880,7 @@ func GetCustomActionCode(swagger *openapi3.Swagger, api WorkflowApp) string{
 			authenticationParameter = ", username_basic, password_basic"
 			authenticationSetup = fmt.Sprintf("authret = requests.get(f\"{url}%s\", headers=parsed_headers, auth=(username_basic, password_basic), verify=False)\n        if 'access_token' in authret.text:\n            parsed_headers[\"Authorization\"] = f\"Bearer {authret.json()['access_token']}\"\n        elif 'jwt' in authret.text:\n            parsed_headers[\"Authorization\"] = f\"Bearer {authret.json()['jwt']}\"\n        elif 'accessToken' in authret.text:\n            parsed_headers[\"Authorization\"] = f\"Bearer {authret.json()['accessToken']}\"\n        else:\n            parsed_headers[\"Authorization\"] = f\"Bearer {authret.text}\"\n        print(f\"Found Bearer auth: {authret.text}\")", api.Authentication.TokenUri)
 		}
-		
+
 	}
 
 	pythonCode := fmt.Sprintf(`		
@@ -1076,7 +1073,7 @@ func AddCustomAction(swagger *openapi3.Swagger, api WorkflowApp) (WorkflowAppAct
 				},
 			})
 		} else if securitySchemes["ApiKeyAuth"] != nil {
-			
+
 			extraParam := WorkflowAppActionParameter{
 				Name:          "apikey",
 				Description:   "The apikey to use",
@@ -1147,80 +1144,79 @@ func AddCustomAction(swagger *openapi3.Swagger, api WorkflowApp) (WorkflowAppAct
 	}
 
 	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "method",
-		Description:   "The http method to use",
-		Multiline:     false,
-		Required:      true,
-		Options:       []string{"GET","POST","PUT","DELETE","PATCH"},
-		Example:       "GET",
-		Schema: SchemaDefinition{
-			Type: "string",
-		},
-	})
-	
-	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "url",
-		Description:   "The URL of the API",
-		Multiline:     false,
-		Required:      true,
-		Example:       "https://api.example.com",
+		Name:        "method",
+		Description: "The http method to use",
+		Multiline:   false,
+		Required:    true,
+		Options:     []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
+		Example:     "GET",
 		Schema: SchemaDefinition{
 			Type: "string",
 		},
 	})
 
 	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "path",
-		Description:   "the path to add to the base url",
-		Multiline:     false,
-		Required:      false,
-		Example:       "/users/profile",
+		Name:        "url",
+		Description: "The URL of the API",
+		Multiline:   false,
+		Required:    true,
+		Example:     "https://api.example.com",
 		Schema: SchemaDefinition{
 			Type: "string",
 		},
 	})
 
 	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "headers",
-		Description:   "Add or edit headers",
-		Multiline:     true,
-		Required:      false,
-		Example:       "Content-Type:application/json\nAccept:application/json",
+		Name:        "path",
+		Description: "the path to add to the base url",
+		Multiline:   false,
+		Required:    false,
+		Example:     "/users/profile",
 		Schema: SchemaDefinition{
 			Type: "string",
 		},
 	})
 
 	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "queries",
-		Description:   "Add or edit queries",
-		Multiline:     true,
-		Required:      false,
-		Example: "view=basic&redirect=test",
-		Schema: SchemaDefinition{
-			Type: "string",
-		},
-	})
-
-
-	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "ssl_verify",
-		Description:   "Check if you want to verify request",
-		Multiline:     false,
-		Options:       []string{"False","True"},
-		Required:      false,
-		Example:       "False",
+		Name:        "headers",
+		Description: "Add or edit headers",
+		Multiline:   true,
+		Required:    false,
+		Example:     "Content-Type:application/json\nAccept:application/json",
 		Schema: SchemaDefinition{
 			Type: "string",
 		},
 	})
 
 	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "body",
-		Description:   "The body to use",
-		Multiline:     true,
-		Required:      false,
-		Example:      `{"username": "example_user", "email": "user@example.com"}`,
+		Name:        "queries",
+		Description: "Add or edit queries",
+		Multiline:   true,
+		Required:    false,
+		Example:     "view=basic&redirect=test",
+		Schema: SchemaDefinition{
+			Type: "string",
+		},
+	})
+
+	parameters = append(parameters, WorkflowAppActionParameter{
+		Name:        "ssl_verify",
+		Description: "Check if you want to verify request",
+		Multiline:   false,
+		Options:     []string{"False", "True"},
+		Required:    false,
+		Example:     "False",
+		Schema: SchemaDefinition{
+			Type: "string",
+		},
+	})
+
+	parameters = append(parameters, WorkflowAppActionParameter{
+		Name:        "body",
+		Description: "The body to use",
+		Multiline:   true,
+		Required:    false,
+		Example:     `{"username": "example_user", "email": "user@example.com"}`,
 		Schema: SchemaDefinition{
 			Type: "string",
 		},
@@ -1432,7 +1428,6 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 					log.Printf("[DEBUG] Set up Oauth2 config for app %s during generation", api.Name)
 					api.Authentication.Type = "oauth2"
 
-
 					api.Authentication.RedirectUri = parsed.AuthorizationCode.AuthorizationUrl
 					api.Authentication.TokenUri = parsed.AuthorizationCode.TokenUrl
 					api.Authentication.RefreshUri = parsed.AuthorizationCode.RefreshUrl
@@ -1453,7 +1448,7 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 				}
 
 				// November 2023: password & client_credentials
-				// Fix mar 2024: set type to oauth2-app 
+				// Fix mar 2024: set type to oauth2-app
 				if len(newValue) > 0 {
 					api.Authentication.GrantType = newValue
 					api.Authentication.Type = "oauth2-app"
@@ -1475,17 +1470,17 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 			})
 
 			/*
-			api.Authentication.Parameters = append(api.Authentication.Parameters, AuthenticationParams{
-				Name:        "client_id",
-				Value:       "",
-				Example:     "client_id",
-				Description: securitySchemes["Oauth2"].Value.Description,
-				In:          securitySchemes["Oauth2"].Value.In,
-				Scheme:      securitySchemes["Oauth2"].Value.Scheme,
-				Schema: SchemaDefinition{
-					Type: securitySchemes["Oauth2"].Value.Scheme,
-				},
-			})
+				api.Authentication.Parameters = append(api.Authentication.Parameters, AuthenticationParams{
+					Name:        "client_id",
+					Value:       "",
+					Example:     "client_id",
+					Description: securitySchemes["Oauth2"].Value.Description,
+					In:          securitySchemes["Oauth2"].Value.In,
+					Scheme:      securitySchemes["Oauth2"].Value.Scheme,
+					Schema: SchemaDefinition{
+						Type: securitySchemes["Oauth2"].Value.Scheme,
+					},
+				})
 			*/
 
 			api.Authentication.Parameters = append(api.Authentication.Parameters, AuthenticationParams{
@@ -1720,8 +1715,7 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 			Type: "string",
 		},
 	})
-    
-	
+
 	// Fixing parameters with :
 	newExtraParams := []WorkflowAppActionParameter{}
 	newOptionalParams := []WorkflowAppActionParameter{}
@@ -1783,7 +1777,6 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 			api.Actions = append(api.Actions, action)
 			pythonFunctions = append(pythonFunctions, curCode)
 		}
-
 
 		// Has to be here because its used differently above.
 		// FIXING this is done during export instead?
@@ -2019,7 +2012,7 @@ func FixParamname(paramname string) string {
 	paramname = strings.Replace(paramname, " ", "_", -1)
 	paramname = strings.Replace(paramname, "-", "_", -1)
 
-	return paramname 
+	return paramname
 }
 
 // FIXME:
@@ -2827,7 +2820,7 @@ func HandleDelete(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []
 					}
 				}
 			}
-			
+
 			if val, ok := param.Value.ExtensionProps.Extensions["multiline"]; ok {
 				j, err := json.Marshal(&val)
 				if err == nil {
@@ -3072,7 +3065,6 @@ func HandlePost(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wo
 					}
 				}
 			}
-
 
 			if val, ok := param.Value.ExtensionProps.Extensions["multiline"]; ok {
 				j, err := json.Marshal(&val)
@@ -3635,7 +3627,7 @@ func RemoveJsonValues(input []byte, depth int64) ([]byte, string, error) {
 
 	sort.Strings(keys)
 
-	// Iterate over the map[string]interface{} and remove the values 
+	// Iterate over the map[string]interface{} and remove the values
 	for _, k := range keys {
 		keyToken += k
 		// Get the value of the key as a map[string]interface{}
