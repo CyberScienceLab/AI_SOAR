@@ -32,6 +32,7 @@ services:
       #- DOCKER_HOST=tcp://docker-socket-proxy:2375
       - SHUFFLE_APP_HOTLOAD_FOLDER=/shuffle-apps
       - SHUFFLE_FILE_LOCATION=/shuffle-files
+      - GATEWAY_URL=${GATEWAY_URL}
     restart: unless-stopped
   orborus:
     image: ghcr.io/shuffle/shuffle-orborus:latest

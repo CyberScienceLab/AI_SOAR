@@ -210,6 +210,9 @@ type WorkflowApp struct {
 
 	Contributors []string `json:"contributors" datastore:"contributors"`
 	RevisionId   string   `json:"revision_id" datastore:"revision_id"`
+
+	// Added for LLM Gateway support
+	LlmUrl string `json:"llm_url" datastore:"llm_url"`
 }
 
 type AppVersion struct {

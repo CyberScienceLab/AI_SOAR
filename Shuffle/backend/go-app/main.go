@@ -2902,15 +2902,19 @@ func handleSwaggerValidation(body []byte) (shuffle.ParsedOpenApi, error) {
 }
 
 func buildSwaggerApp(resp http.ResponseWriter, body []byte, user shuffle.User, skipEdit bool) {
-	type Test struct {
-		Editing bool   `json:"editing" datastore:"editing"`
-		Id      string `json:"id" datastore:"id"`
-		Image   string `json:"image" datastore:"image"`
-		Body    string `json:"body" datastore:"body"`
+	type AppData struct {
+		Editing    bool   `json:"editing" datastore:"editing"`
+		Id         string `json:"id" datastore:"id"`
+		UseGateway bool   `json:"use_gateway" datastore:"use_gateway"`
+
+		// TODO: verify the below aren't used and remove them
+		// cannot find any references to them in the code below
+		Image string `json:"image" datastore:"image"`
+		Body  string `json:"body" datastore:"body"`
 	}
 
-	var test Test
-	err := json.Unmarshal(body, &test)
+	var data AppData
+	err := json.Unmarshal(body, &data)
 	if err != nil {
 		log.Printf("[ERROR] Failed unmarshalling in swagger build: %s", err)
 		resp.WriteHeader(400)
@@ -2923,10 +2927,10 @@ func buildSwaggerApp(resp http.ResponseWriter, body []byte, user shuffle.User, s
 	hasher.Write(body)
 	newmd5 := hex.EncodeToString(hasher.Sum(nil))
 
-	if test.Editing && len(user.Id) > 0 && skipEdit != true {
+	if data.Editing && len(user.Id) > 0 && !skipEdit {
 		// Quick verification test
 		ctx := context.Background()
-		app, err := shuffle.GetApp(ctx, test.Id, user, false)
+		app, err := shuffle.GetApp(ctx, data.Id, user, false)
 		if err != nil {
 			log.Printf("[ERROR] Error getting app when editing: %s", app.Name)
 			resp.WriteHeader(400)
@@ -2965,6 +2969,20 @@ func buildSwaggerApp(resp http.ResponseWriter, body []byte, user shuffle.User, s
 		resp.WriteHeader(500)
 		resp.Write([]byte(`{"success": false, "reason": "Info not parsed"}`))
 		return
+	}
+
+	if data.UseGateway {
+		// add the LLM Gateway Url to the servers list. When generating the python code
+		// it uses swagger.Servers to get the Url for the request so it must be added in swagger.Servers
+		gatewayUrl := os.Getenv("GATEWAY_URL")
+		if len(gatewayUrl) == 0 {
+			log.Printf("[ERORR] No Gateway Url found in env")
+			resp.WriteHeader(500)
+			resp.Write([]byte(`{"success": false, "reason": "No Gateway Url found in env"}`))
+			return
+		}
+
+		swagger.Servers = append(swagger.Servers, &openapi3.Server{URL: gatewayUrl})
 	}
 
 	swagger.Info.Title = shuffle.FixFunctionName(swagger.Info.Title, swagger.Info.Title, false)
@@ -3104,7 +3122,7 @@ func buildSwaggerApp(resp http.ResponseWriter, body []byte, user shuffle.User, s
 			found = true
 			foundNumber = appCounter
 			break
-		} else if app.PrivateID == test.Id && test.Editing {
+		} else if app.PrivateID == data.Id && data.Editing {
 			found = true
 			foundNumber = appCounter
 			break
@@ -3194,7 +3212,7 @@ func buildSwaggerApp(resp http.ResponseWriter, body []byte, user shuffle.User, s
 
 			imagenames := []string{
 				fmt.Sprintf("%s_%s", api.Name, api.AppVersion),
-				fmt.Sprintf("%s_%s", api.Name, test.Id),
+				fmt.Sprintf("%s_%s", api.Name, data.Id),
 			}
 
 			err = shuffle.DistributeAppToEnvironments(ctx, *org, imagenames)

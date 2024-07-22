@@ -1262,7 +1262,17 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 	//uuid.NewV4().String()
 
 	api.IsValid = true
-	api.Link = swagger.Servers[0].URL // host does not exist lol
+
+	// if multiple servers were stored in swagger this indicates that we want to
+	// use a gateway to route the request, but still store the LLM url specified
+	// during app creation
+	if len(swagger.Servers) > 1 {
+		api.LlmUrl = swagger.Servers[0].URL
+		api.Link = swagger.Servers[1].URL
+	} else {
+		api.Link = swagger.Servers[0].URL
+	}
+
 	if strings.HasSuffix(api.Link, "/") {
 		api.Link = api.Link[:len(api.Link)-1]
 	}
@@ -1727,6 +1737,25 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 		param.Name = FixParamname(param.Name)
 		newOptionalParams = append(newOptionalParams, param)
 	}
+
+	// if gateway url exists in swagger, create 'llm-url' param to be used for all actions
+	// this header will be used by gateway to get the LLM Url
+	if len(swagger.Servers) > 1 {
+		LlmUrlHeader := WorkflowAppActionParameter{
+			Name:        "llm-url",
+			Description: "Url to LLM gateway will use to make the request",
+			Multiline:   false,
+			Value:       api.LlmUrl,
+			Required:    true,
+			Example:     api.LlmUrl,
+			Schema: SchemaDefinition{
+				Type: "string",
+			},
+		}
+
+		newExtraParams = append(newExtraParams, LlmUrlHeader)
+	}
+
 	extraParameters = newExtraParams
 	optionalParameters = newOptionalParams
 
@@ -2120,14 +2149,7 @@ func HandleConnect(swagger *openapi3.Swagger, api WorkflowApp, extraParameters [
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Connect.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Connect.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -2317,14 +2339,7 @@ func HandleGet(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wor
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Get.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Get.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -2526,14 +2541,7 @@ func HandleHead(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wo
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Head.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Head.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -2720,14 +2728,7 @@ func HandleDelete(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Delete.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Delete.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -2935,13 +2936,7 @@ func HandlePost(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wo
 	//log.Printf("PATH: %s", actualPath)
 	functionName := FixFunctionName(path.Post.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Post.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -3183,7 +3178,7 @@ func HandlePatch(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []W
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Patch.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Patch.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -3394,14 +3389,7 @@ func HandlePut(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wor
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Put.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Put.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -3602,6 +3590,28 @@ func HandlePut(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wor
 	}
 
 	return action, curCode
+}
+
+// take workflow app and request path
+// return full url that hides baseUrl if nextUrl exists
+func buildUrl(api WorkflowApp, actualPath string) string {
+	var baseUrl string
+	if len(api.LlmUrl) == 0 {
+		baseUrl = api.Link
+	} else {
+		baseUrl = api.LlmUrl
+	}
+
+	url := fmt.Sprintf("%s%s", baseUrl, actualPath)
+
+	// this logic was added by shuffler devs
+	if strings.Contains(url, "_shuffle_replace_") {
+		//log.Printf("[DEBUG] : %s", baseUrl)
+		m := regexp.MustCompile(`_shuffle_replace_\d`)
+		url = m.ReplaceAllString(url, "")
+	}
+
+	return url
 }
 
 func GetAppRequirements() string {
