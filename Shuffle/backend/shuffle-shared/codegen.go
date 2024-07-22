@@ -1738,24 +1738,6 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 		newOptionalParams = append(newOptionalParams, param)
 	}
 
-	// if gateway url exists in swagger, create 'llm-url' param to be used for all actions
-	// this header will be used by gateway to get the LLM Url
-	if len(swagger.Servers) > 1 {
-		LlmUrlHeader := WorkflowAppActionParameter{
-			Name:        "llm-url",
-			Description: "Url LLM gateway will use to make the request",
-			Multiline:   false,
-			Value:       api.LlmUrl,
-			Required:    true,
-			Example:     api.LlmUrl,
-			Schema: SchemaDefinition{
-				Type: "string",
-			},
-		}
-
-		newExtraParams = append(newExtraParams, LlmUrlHeader)
-	}
-
 	extraParameters = newExtraParams
 	optionalParameters = newOptionalParams
 
@@ -2326,6 +2308,7 @@ func HandleConnect(swagger *openapi3.Swagger, api WorkflowApp, extraParameters [
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "connect", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
@@ -2528,6 +2511,7 @@ func HandleGet(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wor
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "get", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
@@ -2715,6 +2699,7 @@ func HandleHead(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wo
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "head", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
@@ -2922,6 +2907,7 @@ func HandleDelete(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "delete", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
@@ -3377,6 +3363,7 @@ func HandlePatch(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []W
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "patch", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
@@ -3584,6 +3571,7 @@ func HandlePut(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wor
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "put", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
