@@ -1743,7 +1743,7 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 	if len(swagger.Servers) > 1 {
 		LlmUrlHeader := WorkflowAppActionParameter{
 			Name:        "llm-url",
-			Description: "Url to LLM gateway will use to make the request",
+			Description: "Url LLM gateway will use to make the request",
 			Multiline:   false,
 			Value:       api.LlmUrl,
 			Required:    true,
@@ -3160,6 +3160,7 @@ func HandlePost(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wo
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "post", parameters, optionalQueries, headersFound, fileField, api, handleFile)
 
 	if len(functionname) > 0 {
@@ -3612,6 +3613,15 @@ func buildUrl(api WorkflowApp, actualPath string) string {
 	}
 
 	return url
+}
+
+// append the llm-url to the request headers if gateway is being used
+func appendLlmUrlHeader(headersFound []string, swagger *openapi3.Swagger) []string {
+	if len(swagger.Servers) > 1 {
+		headersFound = append(headersFound, fmt.Sprintf("%s=%s", "llm-url", swagger.Servers[0].URL))
+	}
+
+	return headersFound
 }
 
 func GetAppRequirements() string {
