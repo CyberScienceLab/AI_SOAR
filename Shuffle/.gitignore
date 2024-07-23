@@ -26,3 +26,6 @@ backend/onprem/app_sdk/apps
 shuffle-database/
 
 */package-lock.json
+
+# remove .env so we don't push any sensitive information
+.env
