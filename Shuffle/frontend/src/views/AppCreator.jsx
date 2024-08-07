@@ -773,7 +773,7 @@ const AppCreator = (defaultprops) => {
 					setNewWorkflowCategories(data.info["x-categories"]);
 				}
 
-        setUseGateway(data.use_gateway);
+				setUseGateway(data.use_gateway);
 			}
 		} catch (e) {
 			console.log("Failed setting info: ", e)
@@ -5157,16 +5157,16 @@ const AppCreator = (defaultprops) => {
         style={{ backgroundColor: inputColor, color: "white", height: "50px" }}
       >
         {[{value: true, string: "On"}, {value: false, string: "Off"}].map((data, index) => {
-					return (
-						<MenuItem
-							key={index}
-							style={{ backgroundColor: inputColor, color: "white" }}
-							value={data.value}
-						>
-							{data.string}
-						</MenuItem>
-        	)
-				})}
+          return (
+            <MenuItem
+              key={index}
+              style={{ backgroundColor: inputColor, color: "white" }}
+              value={data.value}
+            >
+              {data.string}
+            </MenuItem>
+          )
+        })}
       </Select>
     </div>
   );
