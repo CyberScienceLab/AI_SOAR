@@ -452,6 +452,8 @@ const AppCreator = (defaultprops) => {
 
   const [appDownloadData, setAppDownloadData] = React.useState("");
 
+  const [useGateway, setUseGateway] = useState(false);
+
   useEffect(() => {
 	  console.log("In useEffect for openApiData: ", openApiData)
   }, [openApiData]);
@@ -770,6 +772,8 @@ const AppCreator = (defaultprops) => {
 					}
 					setNewWorkflowCategories(data.info["x-categories"]);
 				}
+
+				setUseGateway(data.use_gateway);
 			}
 		} catch (e) {
 			console.log("Failed setting info: ", e)
@@ -1959,6 +1963,7 @@ const AppCreator = (defaultprops) => {
         securitySchemes: {},
       },
       id: props.match.params.appid,
+      use_gateway: useGateway,
     };
 
 		if (isEditing === false) {
@@ -5135,6 +5140,37 @@ const AppCreator = (defaultprops) => {
     };
   };
 
+  const llmGatewayView = (
+    <div style={{ color: "white", position: "relative" }}>
+      <h4>LLM Gateway</h4>
+      <Select
+        fullWidth
+        SelectDisplayProps={{
+          style: {
+            marginLeft: 10,
+          },
+        }}
+        onChange={(e) => {
+          setUseGateway(e.target.value);
+        }}
+        value={useGateway}
+        style={{ backgroundColor: inputColor, color: "white", height: "50px" }}
+      >
+        {[{value: true, string: "On"}, {value: false, string: "Off"}].map((data, index) => {
+          return (
+            <MenuItem
+              key={index}
+              style={{ backgroundColor: inputColor, color: "white" }}
+              value={data.value}
+            >
+              {data.string}
+            </MenuItem>
+          )
+        })}
+      </Select>
+    </div>
+  );
+
   const actionView = (
     <div style={{ color: "white", position: "relative" }}>
       <div style={{ position: "absolute", right: 0, top: 0 }}>
@@ -6155,6 +6191,7 @@ const AppCreator = (defaultprops) => {
           }}
         />
         <div style={{ marginTop: "25px" }}>{tagView}</div>
+        <div style={{ marginTop: "25px" }}>{llmGatewayView}</div>
         {/*
 					{/*
 					<Divider style={{marginBottom: "10px", marginTop: "30px", height: "1px", width: "100%", backgroundColor: "grey"}}/>

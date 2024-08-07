@@ -82,7 +82,7 @@ func GetCorrectActionName(parsed string) string {
 
 	if strings.HasPrefix(parsed, "\"") {
 		parsed = parsed[1:]
-	} 
+	}
 
 	if strings.HasSuffix(parsed, "\"") {
 		parsed = parsed[:len(parsed)-1]
@@ -511,10 +511,8 @@ func MakePythoncode(swagger *openapi3.Swagger, name, url, method string, paramet
 
 			// Add: client_id and client_secret in body as JSON?
 
-
 			// ADD: accessToken = field
 			authenticationSetup = fmt.Sprintf("authret = requests.get(f\"{url}%s\", headers=request_headers, auth=(username_basic, password_basic), verify=False)\n        if 'access_token' in authret.text:\n            request_headers[\"Authorization\"] = f\"Bearer {authret.json()['access_token']}\"\n        elif 'jwt' in authret.text:\n            request_headers[\"Authorization\"] = f\"Bearer {authret.json()['jwt']}\"\n        elif 'accessToken' in authret.text:\n            request_headers[\"Authorization\"] = f\"Bearer {authret.json()['accessToken']}\"\n        else:\n            request_headers[\"Authorization\"] = f\"Bearer {authret.text}\"\n        print(f\"Found Bearer auth: {authret.text}\")", api.Authentication.TokenUri)
-			
 
 			//log.Printf("[DEBUG] Appending jwt code for authenticationSetup:\n        %s", authenticationSetup)
 		}
@@ -835,12 +833,11 @@ func MakePythoncode(swagger *openapi3.Swagger, name, url, method string, paramet
 	//if strings.Contains(strings.ToLower(functionname), "upload_a_file") {
 	//	log.Printf("\n%s", data)
 	//}
-	
 
 	return functionname, data
 }
 
-func GetCustomActionCode(swagger *openapi3.Swagger, api WorkflowApp) string{	
+func GetCustomActionCode(swagger *openapi3.Swagger, api WorkflowApp) string {
 
 	authenticationParameter := ""
 	authenticationSetup := ""
@@ -860,7 +857,7 @@ func GetCustomActionCode(swagger *openapi3.Swagger, api WorkflowApp) string{
 			authenticationParameter = ", apikey"
 
 			if swagger.Components.SecuritySchemes["ApiKeyAuth"].Value.In == "header" {
-			
+
 				authenticationSetup = fmt.Sprintf(`if apikey != " ": parsed_headers["%s"] = apikey`, swagger.Components.SecuritySchemes["ApiKeyAuth"].Value.Name)
 
 				if len(swagger.Components.SecuritySchemes["ApiKeyAuth"].Value.Description) > 0 {
@@ -870,12 +867,12 @@ func GetCustomActionCode(swagger *openapi3.Swagger, api WorkflowApp) string{
 				}
 
 			} else if swagger.Components.SecuritySchemes["ApiKeyAuth"].Value.In == "query" {
-		
+
 				authenticationSetup = fmt.Sprintf("if apikey != \" \": parsed_queries[\"%s\"] = requests.utils.quote(apikey)", swagger.Components.SecuritySchemes["ApiKeyAuth"].Value.Name)
 			}
 
 		} else if swagger.Components.SecuritySchemes["Oauth2"] != nil {
-	
+
 			authenticationParameter = ", access_token"
 			authenticationSetup = fmt.Sprintf("if access_token != \" \": parsed_headers[\"Authorization\"] = f\"Bearer {access_token}\"\n        #parsed_headers[\"Content-Type\"] = \"application/json\"")
 
@@ -883,7 +880,7 @@ func GetCustomActionCode(swagger *openapi3.Swagger, api WorkflowApp) string{
 			authenticationParameter = ", username_basic, password_basic"
 			authenticationSetup = fmt.Sprintf("authret = requests.get(f\"{url}%s\", headers=parsed_headers, auth=(username_basic, password_basic), verify=False)\n        if 'access_token' in authret.text:\n            parsed_headers[\"Authorization\"] = f\"Bearer {authret.json()['access_token']}\"\n        elif 'jwt' in authret.text:\n            parsed_headers[\"Authorization\"] = f\"Bearer {authret.json()['jwt']}\"\n        elif 'accessToken' in authret.text:\n            parsed_headers[\"Authorization\"] = f\"Bearer {authret.json()['accessToken']}\"\n        else:\n            parsed_headers[\"Authorization\"] = f\"Bearer {authret.text}\"\n        print(f\"Found Bearer auth: {authret.text}\")", api.Authentication.TokenUri)
 		}
-		
+
 	}
 
 	pythonCode := fmt.Sprintf(`		
@@ -1076,7 +1073,7 @@ func AddCustomAction(swagger *openapi3.Swagger, api WorkflowApp) (WorkflowAppAct
 				},
 			})
 		} else if securitySchemes["ApiKeyAuth"] != nil {
-			
+
 			extraParam := WorkflowAppActionParameter{
 				Name:          "apikey",
 				Description:   "The apikey to use",
@@ -1147,80 +1144,79 @@ func AddCustomAction(swagger *openapi3.Swagger, api WorkflowApp) (WorkflowAppAct
 	}
 
 	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "method",
-		Description:   "The http method to use",
-		Multiline:     false,
-		Required:      true,
-		Options:       []string{"GET","POST","PUT","DELETE","PATCH"},
-		Example:       "GET",
-		Schema: SchemaDefinition{
-			Type: "string",
-		},
-	})
-	
-	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "url",
-		Description:   "The URL of the API",
-		Multiline:     false,
-		Required:      true,
-		Example:       "https://api.example.com",
+		Name:        "method",
+		Description: "The http method to use",
+		Multiline:   false,
+		Required:    true,
+		Options:     []string{"GET", "POST", "PUT", "DELETE", "PATCH"},
+		Example:     "GET",
 		Schema: SchemaDefinition{
 			Type: "string",
 		},
 	})
 
 	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "path",
-		Description:   "the path to add to the base url",
-		Multiline:     false,
-		Required:      false,
-		Example:       "/users/profile",
+		Name:        "url",
+		Description: "The URL of the API",
+		Multiline:   false,
+		Required:    true,
+		Example:     "https://api.example.com",
 		Schema: SchemaDefinition{
 			Type: "string",
 		},
 	})
 
 	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "headers",
-		Description:   "Add or edit headers",
-		Multiline:     true,
-		Required:      false,
-		Example:       "Content-Type:application/json\nAccept:application/json",
+		Name:        "path",
+		Description: "the path to add to the base url",
+		Multiline:   false,
+		Required:    false,
+		Example:     "/users/profile",
 		Schema: SchemaDefinition{
 			Type: "string",
 		},
 	})
 
 	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "queries",
-		Description:   "Add or edit queries",
-		Multiline:     true,
-		Required:      false,
-		Example: "view=basic&redirect=test",
-		Schema: SchemaDefinition{
-			Type: "string",
-		},
-	})
-
-
-	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "ssl_verify",
-		Description:   "Check if you want to verify request",
-		Multiline:     false,
-		Options:       []string{"False","True"},
-		Required:      false,
-		Example:       "False",
+		Name:        "headers",
+		Description: "Add or edit headers",
+		Multiline:   true,
+		Required:    false,
+		Example:     "Content-Type:application/json\nAccept:application/json",
 		Schema: SchemaDefinition{
 			Type: "string",
 		},
 	})
 
 	parameters = append(parameters, WorkflowAppActionParameter{
-		Name:          "body",
-		Description:   "The body to use",
-		Multiline:     true,
-		Required:      false,
-		Example:      `{"username": "example_user", "email": "user@example.com"}`,
+		Name:        "queries",
+		Description: "Add or edit queries",
+		Multiline:   true,
+		Required:    false,
+		Example:     "view=basic&redirect=test",
+		Schema: SchemaDefinition{
+			Type: "string",
+		},
+	})
+
+	parameters = append(parameters, WorkflowAppActionParameter{
+		Name:        "ssl_verify",
+		Description: "Check if you want to verify request",
+		Multiline:   false,
+		Options:     []string{"False", "True"},
+		Required:    false,
+		Example:     "False",
+		Schema: SchemaDefinition{
+			Type: "string",
+		},
+	})
+
+	parameters = append(parameters, WorkflowAppActionParameter{
+		Name:        "body",
+		Description: "The body to use",
+		Multiline:   true,
+		Required:    false,
+		Example:     `{"username": "example_user", "email": "user@example.com"}`,
 		Schema: SchemaDefinition{
 			Type: "string",
 		},
@@ -1266,7 +1262,17 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 	//uuid.NewV4().String()
 
 	api.IsValid = true
-	api.Link = swagger.Servers[0].URL // host does not exist lol
+
+	// if multiple servers were stored in swagger this indicates that we want to
+	// use a gateway to route the request, but still store the LLM url specified
+	// during app creation
+	if len(swagger.Servers) > 1 {
+		api.LlmUrl = swagger.Servers[0].URL
+		api.Link = swagger.Servers[1].URL
+	} else {
+		api.Link = swagger.Servers[0].URL
+	}
+
 	if strings.HasSuffix(api.Link, "/") {
 		api.Link = api.Link[:len(api.Link)-1]
 	}
@@ -1432,7 +1438,6 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 					log.Printf("[DEBUG] Set up Oauth2 config for app %s during generation", api.Name)
 					api.Authentication.Type = "oauth2"
 
-
 					api.Authentication.RedirectUri = parsed.AuthorizationCode.AuthorizationUrl
 					api.Authentication.TokenUri = parsed.AuthorizationCode.TokenUrl
 					api.Authentication.RefreshUri = parsed.AuthorizationCode.RefreshUrl
@@ -1453,7 +1458,7 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 				}
 
 				// November 2023: password & client_credentials
-				// Fix mar 2024: set type to oauth2-app 
+				// Fix mar 2024: set type to oauth2-app
 				if len(newValue) > 0 {
 					api.Authentication.GrantType = newValue
 					api.Authentication.Type = "oauth2-app"
@@ -1475,17 +1480,17 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 			})
 
 			/*
-			api.Authentication.Parameters = append(api.Authentication.Parameters, AuthenticationParams{
-				Name:        "client_id",
-				Value:       "",
-				Example:     "client_id",
-				Description: securitySchemes["Oauth2"].Value.Description,
-				In:          securitySchemes["Oauth2"].Value.In,
-				Scheme:      securitySchemes["Oauth2"].Value.Scheme,
-				Schema: SchemaDefinition{
-					Type: securitySchemes["Oauth2"].Value.Scheme,
-				},
-			})
+				api.Authentication.Parameters = append(api.Authentication.Parameters, AuthenticationParams{
+					Name:        "client_id",
+					Value:       "",
+					Example:     "client_id",
+					Description: securitySchemes["Oauth2"].Value.Description,
+					In:          securitySchemes["Oauth2"].Value.In,
+					Scheme:      securitySchemes["Oauth2"].Value.Scheme,
+					Schema: SchemaDefinition{
+						Type: securitySchemes["Oauth2"].Value.Scheme,
+					},
+				})
 			*/
 
 			api.Authentication.Parameters = append(api.Authentication.Parameters, AuthenticationParams{
@@ -1720,8 +1725,7 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 			Type: "string",
 		},
 	})
-    
-	
+
 	// Fixing parameters with :
 	newExtraParams := []WorkflowAppActionParameter{}
 	newOptionalParams := []WorkflowAppActionParameter{}
@@ -1733,6 +1737,7 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 		param.Name = FixParamname(param.Name)
 		newOptionalParams = append(newOptionalParams, param)
 	}
+
 	extraParameters = newExtraParams
 	optionalParameters = newOptionalParams
 
@@ -1783,7 +1788,6 @@ func GenerateYaml(swagger *openapi3.Swagger, newmd5 string) (*openapi3.Swagger, 
 			api.Actions = append(api.Actions, action)
 			pythonFunctions = append(pythonFunctions, curCode)
 		}
-
 
 		// Has to be here because its used differently above.
 		// FIXING this is done during export instead?
@@ -2019,7 +2023,7 @@ func FixParamname(paramname string) string {
 	paramname = strings.Replace(paramname, " ", "_", -1)
 	paramname = strings.Replace(paramname, "-", "_", -1)
 
-	return paramname 
+	return paramname
 }
 
 // FIXME:
@@ -2127,14 +2131,7 @@ func HandleConnect(swagger *openapi3.Swagger, api WorkflowApp, extraParameters [
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Connect.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Connect.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -2311,6 +2308,7 @@ func HandleConnect(swagger *openapi3.Swagger, api WorkflowApp, extraParameters [
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "connect", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
@@ -2324,14 +2322,7 @@ func HandleGet(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wor
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Get.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Get.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -2520,6 +2511,7 @@ func HandleGet(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wor
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "get", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
@@ -2533,14 +2525,7 @@ func HandleHead(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wo
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Head.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Head.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -2714,6 +2699,7 @@ func HandleHead(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wo
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "head", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
@@ -2727,14 +2713,7 @@ func HandleDelete(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Delete.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Delete.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -2827,7 +2806,7 @@ func HandleDelete(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []
 					}
 				}
 			}
-			
+
 			if val, ok := param.Value.ExtensionProps.Extensions["multiline"]; ok {
 				j, err := json.Marshal(&val)
 				if err == nil {
@@ -2928,6 +2907,7 @@ func HandleDelete(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "delete", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
@@ -2942,13 +2922,7 @@ func HandlePost(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wo
 	//log.Printf("PATH: %s", actualPath)
 	functionName := FixFunctionName(path.Post.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Post.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -3073,7 +3047,6 @@ func HandlePost(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wo
 				}
 			}
 
-
 			if val, ok := param.Value.ExtensionProps.Extensions["multiline"]; ok {
 				j, err := json.Marshal(&val)
 				if err == nil {
@@ -3173,6 +3146,7 @@ func HandlePost(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wo
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "post", parameters, optionalQueries, headersFound, fileField, api, handleFile)
 
 	if len(functionname) > 0 {
@@ -3191,7 +3165,7 @@ func HandlePatch(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []W
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Patch.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Patch.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -3389,6 +3363,7 @@ func HandlePatch(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []W
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "patch", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
@@ -3402,14 +3377,7 @@ func HandlePut(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wor
 	// What to do with this, hmm
 	functionName := FixFunctionName(path.Put.Summary, actualPath, true)
 
-	baseUrl := fmt.Sprintf("%s%s", api.Link, actualPath)
-
-	if strings.Contains(baseUrl, "_shuffle_replace_") {
-		//log.Printf("[DEBUG] : %s", baseUrl)
-		m := regexp.MustCompile(`_shuffle_replace_\d`)
-		baseUrl = m.ReplaceAllString(baseUrl, "")
-	}
-
+	baseUrl := buildUrl(api, actualPath)
 	newDesc := fmt.Sprintf("%s\n\n%s", path.Put.Description, baseUrl)
 	action := WorkflowAppAction{
 		Description: newDesc,
@@ -3603,6 +3571,7 @@ func HandlePut(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wor
 		action.Parameters = append(action.Parameters, optionalParam)
 	}
 
+	headersFound = appendLlmUrlHeader(headersFound, swagger)
 	functionname, curCode := MakePythoncode(swagger, functionName, baseUrl, "put", parameters, optionalQueries, headersFound, "", api, handleFile)
 
 	if len(functionname) > 0 {
@@ -3610,6 +3579,37 @@ func HandlePut(swagger *openapi3.Swagger, api WorkflowApp, extraParameters []Wor
 	}
 
 	return action, curCode
+}
+
+// take workflow app and request path
+// return full url that hides baseUrl if nextUrl exists
+func buildUrl(api WorkflowApp, actualPath string) string {
+	var baseUrl string
+	if len(api.LlmUrl) == 0 {
+		baseUrl = api.Link
+	} else {
+		baseUrl = api.LlmUrl
+	}
+
+	url := fmt.Sprintf("%s%s", baseUrl, actualPath)
+
+	// this logic was added by shuffler devs
+	if strings.Contains(url, "_shuffle_replace_") {
+		//log.Printf("[DEBUG] : %s", baseUrl)
+		m := regexp.MustCompile(`_shuffle_replace_\d`)
+		url = m.ReplaceAllString(url, "")
+	}
+
+	return url
+}
+
+// append the llm-url to the request headers if gateway is being used
+func appendLlmUrlHeader(headersFound []string, swagger *openapi3.Swagger) []string {
+	if len(swagger.Servers) > 1 {
+		headersFound = append(headersFound, fmt.Sprintf("%s=%s", "llm-url", swagger.Servers[0].URL))
+	}
+
+	return headersFound
 }
 
 func GetAppRequirements() string {
@@ -3635,7 +3635,7 @@ func RemoveJsonValues(input []byte, depth int64) ([]byte, string, error) {
 
 	sort.Strings(keys)
 
-	// Iterate over the map[string]interface{} and remove the values 
+	// Iterate over the map[string]interface{} and remove the values
 	for _, k := range keys {
 		keyToken += k
 		// Get the value of the key as a map[string]interface{}
