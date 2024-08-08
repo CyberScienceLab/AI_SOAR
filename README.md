@@ -24,13 +24,13 @@ For a more interactive learning experience, check out our [YouTube Playlist](htt
 
 ## Run AI_SOAR for first time
 Setup Instructions: follow these steps to configure and run the application on your local machine.
-1) Change Directory - Navigate to the Shuffler directory in your terminal:
+1) **Change Directory** - Navigate to the Shuffler directory, in terminal:
     -  cd Shuffler
-2) Configure Environment Variables - Create .env file and copy contents from .env.example. Must assign values to following fields:
+2) **Configure Environment Variables** - Create .env file and copy contents from .env.example. Must assign values to following fields:
     -  GATEWAY_URL
-3) Build Backend Docker Image - Construct the backend Docker image:
-    - In terminal: docker build -t csl-backend:latest /backend
-4) Build Frontend Docker Image - Construct the frontend Docker image:
-    - In terminal: docker build -t csl-frontend:latest /frontend
-5) Launch the Application - Deploy the application using Docker Compose, in terminal:
+3) **Build Backend Docker Image** - Construct the backend Docker image, in terminal:
+    - docker build -t csl-backend:latest /backend
+4) **Build Frontend Docker Image** - Construct the frontend Docker image, in terminal:
+    - docker build -t csl-frontend:latest /frontend
+5) **Launch the Application** - Deploy the application using Docker Compose, in terminal:
     - docker compose up -d
