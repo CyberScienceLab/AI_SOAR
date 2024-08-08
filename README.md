@@ -23,7 +23,7 @@ For a more interactive learning experience, check out our [YouTube Playlist](htt
     [![Shuffler RAG CVE Workflow Thumbnail](assets/Shuffler_RAG_CVE_Workflow_Thumbnail.png)](https://youtu.be/Zdont8taRfg?si=dzmvO6UOyVLDsPW5)
 
 ## Run AI_SOAR for first time
-Follow these steps to configure and run the application on your local machine.
+Setup Instructions: follow these steps to configure and run the application on your local machine.
 1) Change Directory - Navigate to the Shuffler directory in your terminal:
     -  cd Shuffler
 2) Configure Environment Variables - Create .env file and copy contents from .env.example. Must assign values to following fields:
