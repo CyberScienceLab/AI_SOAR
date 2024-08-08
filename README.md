@@ -32,4 +32,5 @@ Follow these steps to configure and run the application on your local machine.
     - In terminal: docker build -t csl-backend:latest /backend
 4) Build Frontend Docker Image - Construct the frontend Docker image:
     - In terminal: docker build -t csl-frontend:latest /frontend
-5) Launch the Application - Deploy the application using Docker Compose, in terminal: docker compose up -d
+5) Launch the Application - Deploy the application using Docker Compose, in terminal:
+    - docker compose up -d
