@@ -23,11 +23,12 @@ For a more interactive learning experience, check out our [YouTube Playlist](htt
     [![Shuffler RAG CVE Workflow Thumbnail](assets/Shuffler_RAG_CVE_Workflow_Thumbnail.png)](https://youtu.be/Zdont8taRfg?si=dzmvO6UOyVLDsPW5)
 
 ## Run AI_SOAR for first time
-1) In terminal: cd Shuffler
+Follow these steps to configure and run the application on your local machine.
+1) Navigate to the Shuffler directory in your terminal: cd Shuffler
 2) Create .env file and copy contents from .env.example. Must assign values to following fields:
     -  GATEWAY_URL
-3) Build backend image
+3) Construct the backend Docker image
     - In terminal: docker build -t csl-backend:latest /backend
 4) Build frontend image
     - In terminal: docker build -t csl-frontend:latest /frontend
-3) In terminal: docker compose up -d
+5) Deploy the application using Docker Compose, in terminal: docker compose up -d
