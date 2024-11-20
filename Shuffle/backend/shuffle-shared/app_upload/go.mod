@@ -7,7 +7,7 @@ go 1.15
 require (
 	cloud.google.com/go/storage v1.14.0
 	github.com/Microsoft/go-winio v0.4.17 // indirect
-	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v24.0.9+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
